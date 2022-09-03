@@ -74,10 +74,10 @@ export class ActorPositionSyncController extends AbstractActorSyncController {
   }
 
   receiveHealthSync (packet: ActorSyncPacket): void {
-    const heatlhData = packet.actorData as ActorHealthData
-    const storagePositionData = this.storage.actorData[heatlhData.actorUUID]
-    if (heatlhData.health < storagePositionData.health) {
-      storagePositionData.health = heatlhData.health
+    const healthData = packet.actorData as ActorHealthData
+    const storagePositionData = this.storage.actorData[healthData.actorUUID]
+    if (healthData.health < storagePositionData.health) {
+      storagePositionData.health = healthData.health
     }
   }
 

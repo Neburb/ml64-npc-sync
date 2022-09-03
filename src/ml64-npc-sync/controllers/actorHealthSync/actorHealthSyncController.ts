@@ -53,13 +53,13 @@ export class ActorHealthSyncController extends AbstractActorSyncController {
     const actor = this.getActor(healthPacket.actorData.actorUUID)
     if (actor !== undefined && actor != null) {
       if (actor.health < actorData.health) {
+        actorData.health = actor.health
         this.modLoader.clientSide.sendPacket(new ActorHealthSyncPacket(actorData, this.modLoader.clientLobby))
       } else {
         this.storage.actorData[healthPacket.actorData.actorUUID] = actorData
+        actor.health = actorData.health
         if (actorData.health <= 0) {
           actor.destroy()
-        } else {
-          actor.health = actorData.health
         }
       }
     } else {

@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "yarn jest",
+    "test": "jest",
     "dev": "modloader64 -br",
     "dev-mp": "modloader64 -br2",
     "build": "modloader64 -bd",
