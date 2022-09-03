@@ -382,7 +382,7 @@ describe('ActorPositionSyncController Test', () => {
   })
 
   test('given correct buffer -> getBase64 -> calls correctly toString base64', () => {
-    const toStringFn = jest.fn().mockImplementation((encoding)=>{
+    const toStringFn = jest.fn().mockImplementation((encoding) => {
       expect(encoding).toBe('base64')
     })
     const buffer = {

@@ -62,7 +62,7 @@ describe('ActorSyncClient Test', () => {
     core.helper = {
       isTitleScreen: jest.fn().mockReturnValue(false)
     } as unknown as IOotHelper
-    const sendPacketFn = jest.fn().mockImplementation((receivedPacket)=>{
+    const sendPacketFn = jest.fn().mockImplementation((receivedPacket) => {
       expect(receivedPacket).toBe(packet)
     })
     modLoader.clientSide = {
@@ -79,7 +79,7 @@ describe('ActorSyncClient Test', () => {
     } as unknown as IOotHelper
     const actorData = { health: 0 } as unknown as ActorHealthData
     const packet = new ActorHealthSyncPacket(actorData, 'Lobby')
-    const receiveSyncFn = jest.fn().mockImplementation((receivedPacket)=>{
+    const receiveSyncFn = jest.fn().mockImplementation((receivedPacket) => {
       expect(receivedPacket).toBe(packet)
     })
     const dummyController = {
@@ -97,7 +97,7 @@ describe('ActorSyncClient Test', () => {
     } as unknown as IOotHelper
     const actorData = { health: 0 } as unknown as ActorHealthData
     const packet = new ActorHealthSyncPacket(actorData, 'Lobby')
-    const receiveSyncFn = jest.fn().mockImplementation((receivedPacket)=>{
+    const receiveSyncFn = jest.fn().mockImplementation((receivedPacket) => {
       expect(receivedPacket).toBe(packet)
     })
     const dummyController = {
