@@ -1,0 +1,9 @@
+{
+    "jest.jestCommandLine": "yarn test",
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "editor.defaultFormatter": "rvest.vs-code-prettier-eslint",
+    "editor.tabSize": 2,
+    "jest.autoRun": {
+        "watch": false
+    }
+}
