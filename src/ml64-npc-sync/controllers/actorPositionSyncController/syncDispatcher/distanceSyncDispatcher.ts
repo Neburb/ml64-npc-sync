@@ -21,7 +21,5 @@ export class DistanceSyncDispatcher extends AbstractSyncDispatcher {
     return prioritySync2.distance - prioritySync1.distance
   }
 
-  static moveDecimal (n: number): number {
-    return n / Math.pow(10, NUMBER_OF_POSITION_DECIMALS)
-  }
+  static moveDecimal = (n: number): number => { return n / Math.pow(10, NUMBER_OF_POSITION_DECIMALS) }
 }
