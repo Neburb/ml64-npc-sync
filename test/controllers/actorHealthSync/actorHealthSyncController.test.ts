@@ -4,8 +4,9 @@ import { ActorCategory } from 'modloader64_api/OOT/ActorCategory'
 import { IActor } from 'modloader64_api/OOT/IActor'
 import { ActorHealthSyncController } from '../../../src/ml64-npc-sync/controllers/actorHealthSync/actorHealthSyncController'
 import { ActorHealthSyncPacket, ACTOR_HEALTH_SYNC_PACKET_TAG } from '../../../src/ml64-npc-sync/packets/actorHealthSyncPacket'
-import { ActorHealthData } from '@ml64-npc-sync/model/actorHealthData'
+import { ActorHealthData } from '../../../src/ml64-npc-sync/model/actorHealthData'
 import { INetworkClient } from 'modloader64_api/NetworkHandler'
+import { HealthSyncMode } from '../../../src/ml64-npc-sync/controllers/actorHealthSync/healthSyncMode'
 
 describe('ActorHealthSyncController Test', () => {
   let actorHealthSyncController: ActorHealthSyncController
@@ -36,7 +37,7 @@ describe('ActorHealthSyncController Test', () => {
       scene: -1
     } as unknown as IGlobalContext
     const categories = [ActorCategory.ENEMY, ActorCategory.BOSS]
-    actorHealthSyncController = new ActorHealthSyncController(core, modLoader, categories)
+    actorHealthSyncController = new ActorHealthSyncController(core, modLoader, categories, HealthSyncMode.HealthAndDeath)
     expect(actorHealthSyncController.core).toBe(core)
     expect(actorHealthSyncController.modLoader).toBe(modLoader)
     expect(actorHealthSyncController.actorCategories.length).toBe(categories.length)
@@ -196,7 +197,7 @@ describe('ActorHealthSyncController Test', () => {
     expect(actor.health).toBe(actorHealthData.health)
   })
 
-  test('given packet with dead actor and greater health actor in storage -> receiveSync -> destroys the actor', () => {
+  test('given packet with dead actor and greater health actor in storage and sync set to health and death -> receiveSync -> destroys the actor', () => {
     const actorHealthData = { scene: Math.random(), actorUUID: `UUID-${Math.random().toString(10)}`, health: 0 } as unknown as ActorHealthData
     actorHealthSyncController.storage.scene = actorHealthData.scene
     const destroyFn = jest.fn()
@@ -217,5 +218,29 @@ describe('ActorHealthSyncController Test', () => {
     expect(sendPacketFn).toBeCalledTimes(0)
     expect(actor.health).toBe(actorHealthData.health)
     expect(destroyFn).toBeCalledTimes(1)
+  })
+
+  test('given packet with dead actor and greater health actor in storage and sync set to health -> receiveSync -> does not destroys the actor', () => {
+    actorHealthSyncController.healthSyncMode = HealthSyncMode.Health
+    const actorHealthData = { scene: Math.random(), actorUUID: `UUID-${Math.random().toString(10)}`, health: 0 } as unknown as ActorHealthData
+    actorHealthSyncController.storage.scene = actorHealthData.scene
+    const destroyFn = jest.fn()
+    const actor = {
+      actorUUID: actorHealthData.actorUUID,
+      actorID: Math.random(),
+      health: Math.random() * 100,
+      destroy: destroyFn
+    } as unknown as IActor
+    actors = [actor]
+    const sendPacketFn = jest.fn()
+    modLoader.clientSide = {
+      sendPacket: sendPacketFn
+    } as unknown as INetworkClient
+    const packet: ActorHealthSyncPacket = new ActorHealthSyncPacket(actorHealthData, ACTOR_HEALTH_SYNC_PACKET_TAG)
+    actorHealthSyncController.receiveSync(packet)
+    expect(getActorsFn).toBeCalledTimes(actorHealthSyncController.actorCategories.length)
+    expect(sendPacketFn).toBeCalledTimes(0)
+    expect(actor.health).toBe(actorHealthData.health)
+    expect(destroyFn).toBeCalledTimes(0)
   })
 })

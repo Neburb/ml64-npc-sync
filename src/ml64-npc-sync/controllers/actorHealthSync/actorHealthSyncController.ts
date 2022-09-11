@@ -6,18 +6,22 @@ import { ActorCategory } from 'modloader64_api/OOT/ActorCategory'
 import { IOOTCore } from 'modloader64_api/OOT/OOTAPI'
 import { ActorHealthStorage } from '../storages/actorHealthStorage'
 import { AbstractActorSyncController } from '../abstractActorSyncController'
+import { HealthSyncMode } from './healthSyncMode'
 
 export class ActorHealthSyncController extends AbstractActorSyncController {
   actorCategories: ActorCategory[]
+
+  healthSyncMode: HealthSyncMode
 
   storage: ActorHealthStorage = {
     scene: -1,
     actorData: {}
   }
 
-  constructor (core: IOOTCore, modLoader: IModLoaderAPI, actorCategories: ActorCategory[]) {
+  constructor (core: IOOTCore, modLoader: IModLoaderAPI, actorCategories: ActorCategory[], healthSyncMode: HealthSyncMode) {
     super(core, modLoader, [ACTOR_HEALTH_SYNC_PACKET_TAG])
     this.actorCategories = actorCategories
+    this.healthSyncMode = healthSyncMode
   }
 
   sync (_frame: number): AbstractPacket[] {
@@ -59,7 +63,7 @@ export class ActorHealthSyncController extends AbstractActorSyncController {
       } else {
         this.storage.actorData[healthPacket.actorData.actorUUID] = actorData
         actor.health = actorData.health
-        if (actorData.health <= 0) {
+        if (actorData.health <= 0 && this.healthSyncMode === HealthSyncMode.HealthAndDeath) {
           actor.destroy()
         }
       }

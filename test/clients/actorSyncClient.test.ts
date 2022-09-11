@@ -28,16 +28,19 @@ describe('ActorSyncClient Test', () => {
 
   test('preinit -> correctly setup controllers', () => {
     actorSyncClient.preinit()
-    expect(actorSyncClient.controllers.length).toBe(3)
+    expect(actorSyncClient.controllers.length).toBe(4)
     expect(actorSyncClient.controllers[0]).toBeInstanceOf(ActorHealthSyncController)
     expect(actorSyncClient.controllers[0].core).toBe(core)
     expect(actorSyncClient.controllers[0].modLoader).toBe(modLoader)
-    expect(actorSyncClient.controllers[1]).toBeInstanceOf(ActorPositionSyncController)
+    expect(actorSyncClient.controllers[1]).toBeInstanceOf(ActorHealthSyncController)
     expect(actorSyncClient.controllers[1].core).toBe(core)
     expect(actorSyncClient.controllers[1].modLoader).toBe(modLoader)
     expect(actorSyncClient.controllers[2]).toBeInstanceOf(ActorPositionSyncController)
     expect(actorSyncClient.controllers[2].core).toBe(core)
     expect(actorSyncClient.controllers[2].modLoader).toBe(modLoader)
+    expect(actorSyncClient.controllers[3]).toBeInstanceOf(ActorPositionSyncController)
+    expect(actorSyncClient.controllers[3].core).toBe(core)
+    expect(actorSyncClient.controllers[3].modLoader).toBe(modLoader)
   })
 
   test('given title screen -> onTick -> does nothing', () => {
