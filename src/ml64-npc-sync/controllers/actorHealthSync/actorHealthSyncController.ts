@@ -9,8 +9,6 @@ import { AbstractActorSyncController } from '../abstractActorSyncController'
 import { HealthSyncMode } from './healthSyncMode'
 
 export class ActorHealthSyncController extends AbstractActorSyncController {
-  actorCategories: ActorCategory[]
-
   healthSyncMode: HealthSyncMode
 
   storage: ActorHealthStorage = {
@@ -19,8 +17,7 @@ export class ActorHealthSyncController extends AbstractActorSyncController {
   }
 
   constructor (core: IOOTCore, modLoader: IModLoaderAPI, actorCategories: ActorCategory[], healthSyncMode: HealthSyncMode) {
-    super(core, modLoader, [ACTOR_HEALTH_SYNC_PACKET_TAG])
-    this.actorCategories = actorCategories
+    super(core, modLoader, [ACTOR_HEALTH_SYNC_PACKET_TAG], actorCategories)
     this.healthSyncMode = healthSyncMode
   }
 

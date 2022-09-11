@@ -13,11 +13,10 @@ import { PositionSyncMode } from './positionSyncMode'
 
 export const NUMBER_OF_POSITION_DECIMALS = 17
 export const RANDOM_RATE = 100
+const EXPORT_ENCODING = 'base64'
 
 export class ActorPositionSyncController extends AbstractActorSyncController {
   positionSyncMode: PositionSyncMode
-
-  actorCategories: ActorCategory[]
 
   storage: ActorPositionStorage = {
     scene: -1,
@@ -26,8 +25,7 @@ export class ActorPositionSyncController extends AbstractActorSyncController {
   }
 
   constructor (core: IOOTCore, modLoader: IModLoaderAPI, positionSyncMode: PositionSyncMode, actorCategories: ActorCategory[]) {
-    super(core, modLoader, [ACTOR_HEALTH_SYNC_PACKET_TAG, ACTOR_POSITION_SYNC_PACKET_TAG])
-    this.actorCategories = actorCategories
+    super(core, modLoader, [ACTOR_HEALTH_SYNC_PACKET_TAG, ACTOR_POSITION_SYNC_PACKET_TAG], actorCategories)
     this.positionSyncMode = positionSyncMode
   }
 
@@ -87,8 +85,8 @@ export class ActorPositionSyncController extends AbstractActorSyncController {
             actorData.rotation = this.getBase64(actor.rotation.getRawRot())
             packets.push(new ActorPositionSyncPacket(actorData, this.modLoader.clientLobby))
           } else {
-            actor.position.setRawPos(Buffer.from(actorData.position, 'base64'))
-            actor.rotation.setRawRot(Buffer.from(actorData.rotation, 'base64'))
+            actor.position.setRawPos(Buffer.from(actorData.position, EXPORT_ENCODING))
+            actor.rotation.setRawRot(Buffer.from(actorData.rotation, EXPORT_ENCODING))
           }
         }
       })
@@ -101,7 +99,7 @@ export class ActorPositionSyncController extends AbstractActorSyncController {
   }
 
   getBase64 (buffer: Buffer): string {
-    return buffer.toString('base64')
+    return buffer.toString(EXPORT_ENCODING)
   }
 
   receiveSync (packet: AbstractPacket): void {
@@ -143,8 +141,8 @@ export class ActorPositionSyncController extends AbstractActorSyncController {
       if (actor != null) {
         storagePositionData.position = positionData.position
         storagePositionData.rotation = positionData.rotation
-        actor.position.setRawPos(Buffer.from(positionData.position, 'base64'))
-        actor.rotation.setRawRot(Buffer.from(positionData.rotation, 'base64'))
+        actor.position.setRawPos(Buffer.from(positionData.position, EXPORT_ENCODING))
+        actor.rotation.setRawRot(Buffer.from(positionData.rotation, EXPORT_ENCODING))
       }
     }
   }
