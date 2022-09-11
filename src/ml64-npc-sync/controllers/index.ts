@@ -3,8 +3,8 @@ import { ActorCategory } from 'modloader64_api/OOT/ActorCategory'
 import { IOOTCore } from 'modloader64_api/OOT/OOTAPI'
 import { ActorHealthSyncController } from './actorHealthSync/actorHealthSyncController'
 import { HealthSyncMode } from './actorHealthSync/healthSyncMode'
-import { ActorPositionSyncController } from './actorPositionSyncController.ts/actorPositionSyncController'
-import { PositionSyncMode } from './actorPositionSyncController.ts/positionSyncMode'
+import { ActorPositionSyncController } from './actorPositionSyncController/actorPositionSyncController'
+import { PositionSyncMode } from './actorPositionSyncController/positionSyncMode'
 import { INetworkController } from './interfaces/networkController'
 
 export const getControllers = (core: IOOTCore, modLoader: IModLoaderAPI): INetworkController[] => {

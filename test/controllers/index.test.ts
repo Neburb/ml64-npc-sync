@@ -1,11 +1,11 @@
 import { ActorHealthSyncController } from '../../src/ml64-npc-sync/controllers/actorHealthSync/actorHealthSyncController'
-import { ActorPositionSyncController } from '../../src/ml64-npc-sync/controllers/actorPositionSyncController.ts/actorPositionSyncController'
+import { ActorPositionSyncController } from '../../src/ml64-npc-sync/controllers/actorPositionSyncController/actorPositionSyncController'
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI'
 import { IOOTCore } from 'modloader64_api/OOT/OOTAPI'
 import { getControllers } from '../../src/ml64-npc-sync/controllers'
 import { ActorCategory } from 'modloader64_api/OOT/ActorCategory'
 import { HealthSyncMode } from '../../src/ml64-npc-sync/controllers/actorHealthSync/healthSyncMode'
-import { PositionSyncMode } from '../../src/ml64-npc-sync/controllers/actorPositionSyncController.ts/positionSyncMode'
+import { PositionSyncMode } from '../../src/ml64-npc-sync/controllers/actorPositionSyncController/positionSyncMode'
 
 describe('Controller index Test', () => {
   test('getControllers -> returns the correct controllers', () => {

@@ -4,11 +4,11 @@ import { ActorCategory } from 'modloader64_api/OOT/ActorCategory'
 import { IActor } from 'modloader64_api/OOT/IActor'
 import { ActorHealthSyncPacket, ACTOR_HEALTH_SYNC_PACKET_TAG } from '../../../src/ml64-npc-sync/packets/actorHealthSyncPacket'
 import { ActorHealthData } from '../../../src/ml64-npc-sync/model/actorHealthData'
-import { ActorPositionSyncController, NUMBER_OF_POSITION_DECIMALS, RANDOM_RATE } from '../../../src/ml64-npc-sync/controllers/actorPositionSyncController.ts/actorPositionSyncController'
+import { ActorPositionSyncController, NUMBER_OF_POSITION_DECIMALS, RANDOM_RATE } from '../../../src/ml64-npc-sync/controllers/actorPositionSyncController/actorPositionSyncController'
 import { ActorPositionSyncPacket, ACTOR_POSITION_SYNC_PACKET_TAG } from '../../../src/ml64-npc-sync/packets/actorPositionSyncPacket'
 import { ActorPositionData } from '../../../src/ml64-npc-sync/model/actorPositionData'
 import { PrioritySync } from '../../../src/ml64-npc-sync/model/prioritySync'
-import { PositionSyncMode } from '../../../src/ml64-npc-sync/controllers/actorPositionSyncController.ts/positionSyncMode'
+import { PositionSyncMode } from '../../../src/ml64-npc-sync/controllers/actorPositionSyncController/positionSyncMode'
 
 describe('ActorPositionSyncController Test', () => {
   let actorPositionSyncController: ActorPositionSyncController
@@ -257,7 +257,7 @@ describe('ActorPositionSyncController Test', () => {
   test('given correct number -> moveDecimal -> move the correct number of decimals', () => {
     expect(NUMBER_OF_POSITION_DECIMALS).toBe(17)
     const randomNumber = Math.random()
-    expect(ActorPositionSyncController.moveDecimal(randomNumber * Math.pow(10, NUMBER_OF_POSITION_DECIMALS))).toBe(randomNumber)
+    expect(ActorPositionSyncController.moveDecimal(randomNumber * Math.pow(10, NUMBER_OF_POSITION_DECIMALS))).toBeCloseTo(randomNumber)
   })
 
   test('given priority sync to random -> sync -> sets the priority randomly', () => {

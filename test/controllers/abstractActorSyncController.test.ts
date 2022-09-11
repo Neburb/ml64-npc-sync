@@ -7,13 +7,11 @@ import { ActorCategory } from 'modloader64_api/OOT/ActorCategory'
 import { IActor } from 'modloader64_api/OOT/IActor'
 
 class DummyController extends AbstractActorSyncController {
-  actorCategories: ActorCategory[]
   storage: ActorStorage
 
   constructor (core: IOOTCore, modLoader: IModLoaderAPI, eventHandlers: string[], storage: ActorStorage, categories: ActorCategory[]) {
-    super(core, modLoader, eventHandlers)
+    super(core, modLoader, eventHandlers, categories)
     this.storage = storage
-    this.actorCategories = categories
   }
 
   sync (frame: number): AbstractPacket[] {
