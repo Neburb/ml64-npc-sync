@@ -5,18 +5,16 @@ import { ActorSyncPacket } from '../../packets/actorSyncPacket'
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI'
 import { ActorCategory } from 'modloader64_api/OOT/ActorCategory'
 import { IOOTCore } from 'modloader64_api/OOT/OOTAPI'
-import { ActorPositionStorage } from '../storages/actorPositionSyncStorage'
+import { ActorPositionStorage } from '../storages/actorPositionStorage'
 import { ACTOR_HEALTH_SYNC_PACKET_TAG } from '../../packets/actorHealthSyncPacket'
 import { ActorPositionSyncPacket, ACTOR_POSITION_SYNC_PACKET_TAG } from '../../packets/actorPositionSyncPacket'
 import { AbstractActorSyncController } from '../abstractActorSyncController'
-import { PositionSyncMode } from './positionSyncMode'
+import { ISyncDispatcher } from './syncDispatcher/interfaces/syncDispatcher'
 
-export const NUMBER_OF_POSITION_DECIMALS = 17
-export const RANDOM_RATE = 100
 const EXPORT_ENCODING = 'base64'
 
 export class ActorPositionSyncController extends AbstractActorSyncController {
-  positionSyncMode: PositionSyncMode
+  syncDispatchers: ISyncDispatcher[]
 
   storage: ActorPositionStorage = {
     scene: -1,
@@ -24,9 +22,9 @@ export class ActorPositionSyncController extends AbstractActorSyncController {
     prioritySync: {}
   }
 
-  constructor (core: IOOTCore, modLoader: IModLoaderAPI, positionSyncMode: PositionSyncMode, actorCategories: ActorCategory[]) {
+  constructor (core: IOOTCore, modLoader: IModLoaderAPI, actorCategories: ActorCategory[], syncDispatchers: ISyncDispatcher[]) {
     super(core, modLoader, [ACTOR_HEALTH_SYNC_PACKET_TAG, ACTOR_POSITION_SYNC_PACKET_TAG], actorCategories)
-    this.positionSyncMode = positionSyncMode
+    this.syncDispatchers = syncDispatchers
   }
 
   sync (_frame: number): AbstractPacket[] {
@@ -45,41 +43,21 @@ export class ActorPositionSyncController extends AbstractActorSyncController {
         }
         const prioritySync = this.storage.prioritySync[actor.actorUUID]
         if (actorData.health > 0) {
-          if (actorData.prioritySync == null) {
-            actorData.prioritySync = prioritySync
-          } else {
-            switch (this.positionSyncMode) {
-              case PositionSyncMode.PositionAndHealth: {
-                if (actor.health < actorData.health) {
-                  actorData.health = actor.health
-                  prioritySync.priority = prioritySync.priority + 1
-                } else {
-                  const actorPosition = actor.position
-                  const linkPosition = this.core.link.position
-                  const a = ActorPositionSyncController.moveDecimal(actorPosition.x) - ActorPositionSyncController.moveDecimal(linkPosition.x)
-                  const b = ActorPositionSyncController.moveDecimal(actorPosition.y) - ActorPositionSyncController.moveDecimal(linkPosition.y)
-                  const c = Math.sqrt(a * a + b * b)
-                  prioritySync.distance = c
-                }
-                if (actorData.prioritySync.priority === prioritySync.priority) {
-                  if (actorData.prioritySync.distance > prioritySync.distance) {
-                    actorData.prioritySync = prioritySync
-                  }
-                } else if (actorData.prioritySync.priority < prioritySync.priority) {
-                  actorData.prioritySync = prioritySync
-                }
-                break
+          this.syncDispatchers.forEach((dispatcher) => {
+            dispatcher.assignPriority(actorData, prioritySync, actor, this.core)
+          })
+          this.syncDispatchers.forEach((dispatcher) => {
+            if (actorData.prioritySync != null) {
+              const priority = dispatcher.hasPriorityOver(prioritySync, actorData.prioritySync)
+              if (priority < 0) {
+                return true
               }
-              case PositionSyncMode.Random: {
-                const rand = Math.floor(Math.random() * RANDOM_RATE)
-                if (rand === 0) {
-                  prioritySync.priority = actorData.prioritySync?.priority + 1
-                  actorData.prioritySync = prioritySync
-                }
-                break
+              if (priority > 0) {
+                actorData.prioritySync = prioritySync
+                return true
               }
             }
-          }
+          })
           if (actorData.prioritySync?.uuid === this.modLoader.me.uuid) {
             actorData.position = this.getBase64(actor.position.getRawPos())
             actorData.rotation = this.getBase64(actor.rotation.getRawRot())
@@ -92,10 +70,6 @@ export class ActorPositionSyncController extends AbstractActorSyncController {
       })
     })
     return packets
-  }
-
-  static moveDecimal (n: number): number {
-    return n / Math.pow(10, NUMBER_OF_POSITION_DECIMALS)
   }
 
   getBase64 (buffer: Buffer): string {
@@ -126,14 +100,20 @@ export class ActorPositionSyncController extends AbstractActorSyncController {
     const positionData = packet.actorData as ActorPositionData
     const storagePositionData = this.storage.actorData[positionData.actorUUID]
     if (positionData.prioritySync != null && storagePositionData.prioritySync != null) {
-      if (positionData.prioritySync?.priority === storagePositionData.prioritySync?.priority) {
-        if (this.positionSyncMode === PositionSyncMode.Random) {
-          return
+      let hasPriority = false
+      this.syncDispatchers.forEach((dispatcher) => {
+        if (positionData.prioritySync != null && storagePositionData.prioritySync != null) {
+          const priority = dispatcher.hasPriorityOver(positionData.prioritySync, storagePositionData.prioritySync)
+          if (priority < 0) {
+            return true
+          }
+          if (priority > 0) {
+            hasPriority = true
+            return true
+          }
         }
-        if (positionData.prioritySync?.distance > storagePositionData.prioritySync?.distance) {
-          return
-        }
-      } else if (positionData.prioritySync?.priority < storagePositionData.prioritySync?.priority) {
+      })
+      if (!hasPriority) {
         return
       }
       storagePositionData.prioritySync = positionData.prioritySync

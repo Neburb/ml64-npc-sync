@@ -4,11 +4,13 @@ import { ActorCategory } from 'modloader64_api/OOT/ActorCategory'
 import { IActor } from 'modloader64_api/OOT/IActor'
 import { ActorHealthSyncPacket, ACTOR_HEALTH_SYNC_PACKET_TAG } from '../../../src/ml64-npc-sync/packets/actorHealthSyncPacket'
 import { ActorHealthData } from '../../../src/ml64-npc-sync/model/actorHealthData'
-import { ActorPositionSyncController, NUMBER_OF_POSITION_DECIMALS, RANDOM_RATE } from '../../../src/ml64-npc-sync/controllers/actorPositionSyncController/actorPositionSyncController'
+import { ActorPositionSyncController } from '../../../src/ml64-npc-sync/controllers/actorPositionSyncController/actorPositionSyncController'
 import { ActorPositionSyncPacket, ACTOR_POSITION_SYNC_PACKET_TAG } from '../../../src/ml64-npc-sync/packets/actorPositionSyncPacket'
 import { ActorPositionData } from '../../../src/ml64-npc-sync/model/actorPositionData'
 import { PrioritySync } from '../../../src/ml64-npc-sync/model/prioritySync'
-import { PositionSyncMode } from '../../../src/ml64-npc-sync/controllers/actorPositionSyncController/positionSyncMode'
+import { DistanceSyncDispatcher } from '../../../src/ml64-npc-sync/controllers/actorPositionSyncController/syncDispatcher/distanceSyncDispatcher'
+import { RandomSyncDispatcher, RANDOM_RATE } from '../../../src/ml64-npc-sync/controllers/actorPositionSyncController/syncDispatcher/randomSyncDispatcher'
+import { HealthSyncDispatcher } from '../../../src/ml64-npc-sync/controllers/actorPositionSyncController/syncDispatcher/healthSyncDispatcher'
 
 describe('ActorPositionSyncController Test', () => {
   let actorPositionSyncController: ActorPositionSyncController
@@ -49,7 +51,7 @@ describe('ActorPositionSyncController Test', () => {
       scene: -1
     } as unknown as IGlobalContext
     const categories = [ActorCategory.ENEMY, ActorCategory.BOSS]
-    actorPositionSyncController = new ActorPositionSyncController(core, modLoader, PositionSyncMode.PositionAndHealth, categories)
+    actorPositionSyncController = new ActorPositionSyncController(core, modLoader, categories, [new HealthSyncDispatcher(), new DistanceSyncDispatcher()])
     expect(actorPositionSyncController.core).toBe(core)
     expect(actorPositionSyncController.modLoader).toBe(modLoader)
     expect(actorPositionSyncController.actorCategories.length).toBe(categories.length)
@@ -248,16 +250,10 @@ describe('ActorPositionSyncController Test', () => {
     expect(actorPositionSyncController.storage.actorData[actor.actorUUID].prioritySync).toBe(remotePrioritySync)
     actorPositionSyncController.storage.prioritySync[actor.actorUUID] = prioritySync
     expect(actorPositionSyncController.sync(0).length).toBe(0)
-    const a = ActorPositionSyncController.moveDecimal(actor.position.x) - ActorPositionSyncController.moveDecimal(core.link.position.x)
-    const b = ActorPositionSyncController.moveDecimal(actor.position.y) - ActorPositionSyncController.moveDecimal(core.link.position.y)
+    const a = DistanceSyncDispatcher.moveDecimal(actor.position.x) - DistanceSyncDispatcher.moveDecimal(core.link.position.x)
+    const b = DistanceSyncDispatcher.moveDecimal(actor.position.y) - DistanceSyncDispatcher.moveDecimal(core.link.position.y)
     const c = Math.sqrt(a * a + b * b)
     expect(prioritySync.distance).toBe(c)
-  })
-
-  test('given correct number -> moveDecimal -> move the correct number of decimals', () => {
-    expect(NUMBER_OF_POSITION_DECIMALS).toBe(17)
-    const randomNumber = Math.random()
-    expect(ActorPositionSyncController.moveDecimal(randomNumber * Math.pow(10, NUMBER_OF_POSITION_DECIMALS))).toBeCloseTo(randomNumber)
   })
 
   test('given priority sync to random -> sync -> sets the priority randomly', () => {
@@ -269,7 +265,7 @@ describe('ActorPositionSyncController Test', () => {
       return { toString: jest.fn() }
     })
     actors = [actor]
-    actorPositionSyncController.positionSyncMode = PositionSyncMode.Random
+    actorPositionSyncController.syncDispatchers = [new RandomSyncDispatcher()]
     const remotePrioritySync = { priority: 1, uuid: `Remote-${actor.actorUUID}`, distance: 0 }
     actorPositionSyncController.storage.actorData[actor.actorUUID] = { scene: actorPositionSyncController.storage.scene, actorUUID: actor.actorUUID, health: actor.health, prioritySync: remotePrioritySync, position: '', rotation: '' } as unknown as ActorPositionData
     const prioritySync = { priority: remotePrioritySync.priority, uuid: modLoader.me.uuid, distance: 0 }
@@ -383,7 +379,7 @@ describe('ActorPositionSyncController Test', () => {
     actorPositionSyncController.storage.actorData[actor.actorUUID] = { scene: actorPositionSyncController.storage.scene, actorUUID: actor.actorUUID, health: actor.health, prioritySync } as unknown as ActorPositionData
     expect(actorPositionSyncController.storage.actorData[actor.actorUUID].prioritySync).toBe(prioritySync)
     actorPositionSyncController.storage.prioritySync[actor.actorUUID] = prioritySync
-    const actorPositionData = { prioritySync: { uuid: `Remote-${Math.random().toString(10)}`, priority: prioritySync.priority + 1 }, actorUUID: actor.actorUUID, position: '', rotation: '' } as unknown as ActorPositionData
+    const actorPositionData = { prioritySync: { uuid: `Remote-${Math.random().toString(10)}`, priority: prioritySync.priority + 1, distance: 0 }, actorUUID: actor.actorUUID, position: '', rotation: '' } as unknown as ActorPositionData
     const positionPacket = new ActorPositionSyncPacket(actorPositionData, modLoader.clientLobby)
     actorPositionSyncController.receivePositionSync(positionPacket)
     expect(actorPositionSyncController.storage.actorData[actor.actorUUID].prioritySync).toBe(actorPositionData.prioritySync)
@@ -440,27 +436,38 @@ describe('ActorPositionSyncController Test', () => {
     expect(setRawPosFn).toHaveBeenCalledTimes(0)
   })
 
-  test('given priority in packet equals than one already and priority sync set to random -> receivePositionSync -> ignores packet', () => {
-    actorPositionSyncController.positionSyncMode = PositionSyncMode.Random
+  test('given priority in packet equals than one already and priority sync set to random -> receivePositionSync -> sets priority based on random', () => {
+    actorPositionSyncController.syncDispatchers = [new RandomSyncDispatcher()]
     const setRawPosFn = jest.fn()
+    const setRawRotFn = jest.fn()
     const actor = {
       actorUUID: `UUID-${Math.random().toString(10)}`,
       actorID: Math.random(),
       health: Math.random() + 10,
       position: {
         setRawPos: setRawPosFn
+      },
+      rotation: {
+        setRawRot: setRawRotFn
       }
     } as unknown as IActor
     actors = [actor]
     const prioritySync = { priority: Math.random() * 100, uuid: modLoader.me.uuid, distance: 0 }
-    actorPositionSyncController.storage.actorData[actor.actorUUID] = { scene: actorPositionSyncController.storage.scene, actorUUID: actor.actorUUID, health: actor.health, prioritySync } as unknown as ActorPositionData
+    actorPositionSyncController.storage.actorData[actor.actorUUID] = { scene: actorPositionSyncController.storage.scene, actorUUID: actor.actorUUID, health: actor.health, prioritySync, position: '', rotation: '' } as unknown as ActorPositionData
     expect(actorPositionSyncController.storage.actorData[actor.actorUUID].prioritySync).toBe(prioritySync)
     actorPositionSyncController.storage.prioritySync[actor.actorUUID] = prioritySync
-    const actorPositionData = { prioritySync: { uuid: `Remote-${Math.random().toString(10)}`, priority: prioritySync.priority, distance: prioritySync.distance }, actorUUID: actor.actorUUID } as unknown as ActorPositionData
+    const actorPositionData = { prioritySync: { uuid: `Remote-${Math.random().toString(10)}`, priority: prioritySync.priority, distance: prioritySync.distance }, actorUUID: actor.actorUUID, position: '', rotation: '' } as unknown as ActorPositionData
     const positionPacket = new ActorPositionSyncPacket(actorPositionData, modLoader.clientLobby)
+    jest.spyOn(global.Math, 'random').mockReturnValue(1)
     actorPositionSyncController.receivePositionSync(positionPacket)
     expect(actorPositionSyncController.storage.actorData[actor.actorUUID].prioritySync).toBe(prioritySync)
     expect(setRawPosFn).toHaveBeenCalledTimes(0)
+    expect(setRawRotFn).toHaveBeenCalledTimes(0)
+    jest.spyOn(global.Math, 'random').mockReturnValue(0)
+    actorPositionSyncController.receivePositionSync(positionPacket)
+    expect(actorPositionSyncController.storage.actorData[actor.actorUUID].prioritySync).toBe(actorPositionData.prioritySync)
+    expect(setRawPosFn).toHaveBeenCalledTimes(1)
+    expect(setRawRotFn).toHaveBeenCalledTimes(1)
   })
 
   test('given ActorPositionSyncPacket received -> receiveSync -> routes to receivePositionSync', () => {

@@ -5,7 +5,9 @@ import { IOOTCore } from 'modloader64_api/OOT/OOTAPI'
 import { getControllers } from '../../src/ml64-npc-sync/controllers'
 import { ActorCategory } from 'modloader64_api/OOT/ActorCategory'
 import { HealthSyncMode } from '../../src/ml64-npc-sync/controllers/actorHealthSync/healthSyncMode'
-import { PositionSyncMode } from '../../src/ml64-npc-sync/controllers/actorPositionSyncController/positionSyncMode'
+import { HealthSyncDispatcher } from '../../src/ml64-npc-sync/controllers/actorPositionSyncController/syncDispatcher/healthSyncDispatcher'
+import { DistanceSyncDispatcher } from '../../src/ml64-npc-sync/controllers/actorPositionSyncController/syncDispatcher/distanceSyncDispatcher'
+import { RandomSyncDispatcher } from '../../src/ml64-npc-sync/controllers/actorPositionSyncController/syncDispatcher/randomSyncDispatcher'
 
 describe('Controller index Test', () => {
   test('getControllers -> returns the correct controllers', () => {
@@ -35,12 +37,15 @@ describe('Controller index Test', () => {
     expect((controllers[2] as ActorPositionSyncController).actorCategories[1]).toBe(ActorCategory.MISC)
     expect((controllers[2] as ActorPositionSyncController).actorCategories[2]).toBe(ActorCategory.PROP_2)
     expect((controllers[2] as ActorPositionSyncController).actorCategories[3]).toBe(ActorCategory.NPC)
-    expect((controllers[2] as ActorPositionSyncController).positionSyncMode).toBe(PositionSyncMode.PositionAndHealth)
+    expect((controllers[2] as ActorPositionSyncController).syncDispatchers.length).toBe(2)
+    expect((controllers[2] as ActorPositionSyncController).syncDispatchers[0]).toBeInstanceOf(HealthSyncDispatcher)
+    expect((controllers[2] as ActorPositionSyncController).syncDispatchers[1]).toBeInstanceOf(DistanceSyncDispatcher)
     expect(controllers[3]).toBeInstanceOf(ActorPositionSyncController)
     expect(controllers[3].core).toBe(core)
     expect(controllers[3].modLoader).toBe(modLoader)
     expect((controllers[3] as ActorPositionSyncController).actorCategories.length).toBe(1)
     expect((controllers[3] as ActorPositionSyncController).actorCategories[0]).toBe(ActorCategory.BOSS)
-    expect((controllers[3] as ActorPositionSyncController).positionSyncMode).toBe(PositionSyncMode.Random)
+    expect((controllers[3] as ActorPositionSyncController).syncDispatchers.length).toBe(1)
+    expect((controllers[3] as ActorPositionSyncController).syncDispatchers[0]).toBeInstanceOf(RandomSyncDispatcher)
   })
 })
