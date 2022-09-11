@@ -35,12 +35,13 @@ describe('ActorHealthSyncController Test', () => {
     core.global = {
       scene: -1
     } as unknown as IGlobalContext
-    actorHealthSyncController = new ActorHealthSyncController(core, modLoader)
+    const categories = [ActorCategory.ENEMY, ActorCategory.BOSS]
+    actorHealthSyncController = new ActorHealthSyncController(core, modLoader, categories)
     expect(actorHealthSyncController.core).toBe(core)
     expect(actorHealthSyncController.modLoader).toBe(modLoader)
-    expect(actorHealthSyncController.ACTOR_CATEGORIES_TO_BE_SYNCED.length).toBe(2)
-    expect(actorHealthSyncController.ACTOR_CATEGORIES_TO_BE_SYNCED[0]).toBe(ActorCategory.ENEMY)
-    expect(actorHealthSyncController.ACTOR_CATEGORIES_TO_BE_SYNCED[1]).toBe(ActorCategory.BOSS)
+    expect(actorHealthSyncController.actorCategories.length).toBe(categories.length)
+    expect(actorHealthSyncController.actorCategories[0]).toBe(ActorCategory.ENEMY)
+    expect(actorHealthSyncController.actorCategories[1]).toBe(ActorCategory.BOSS)
     expect(actorHealthSyncController.eventHandlers.length).toBe(1)
     expect(actorHealthSyncController.eventHandlers[0]).toBe(ACTOR_HEALTH_SYNC_PACKET_TAG)
     expect('actorData' in actorHealthSyncController.storage).toBe(true)
@@ -132,7 +133,7 @@ describe('ActorHealthSyncController Test', () => {
     } as unknown as INetworkClient
     const packet: ActorHealthSyncPacket = new ActorHealthSyncPacket(actorHealthData, ACTOR_HEALTH_SYNC_PACKET_TAG)
     actorHealthSyncController.receiveSync(packet)
-    expect(getActorsFn).toBeCalledTimes(actorHealthSyncController.ACTOR_CATEGORIES_TO_BE_SYNCED.length)
+    expect(getActorsFn).toBeCalledTimes(actorHealthSyncController.actorCategories.length)
   })
 
   test('given packet with no actor in storage -> receiveSync -> sends a packet with 0 health', () => {
@@ -148,7 +149,7 @@ describe('ActorHealthSyncController Test', () => {
     } as unknown as INetworkClient
     const packet: ActorHealthSyncPacket = new ActorHealthSyncPacket(actorHealthData, ACTOR_HEALTH_SYNC_PACKET_TAG)
     actorHealthSyncController.receiveSync(packet)
-    expect(getActorsFn).toBeCalledTimes(actorHealthSyncController.ACTOR_CATEGORIES_TO_BE_SYNCED.length)
+    expect(getActorsFn).toBeCalledTimes(actorHealthSyncController.actorCategories.length)
     expect(sendPacketFn).toBeCalledTimes(1)
   })
 
@@ -171,7 +172,7 @@ describe('ActorHealthSyncController Test', () => {
     } as unknown as INetworkClient
     const packet: ActorHealthSyncPacket = new ActorHealthSyncPacket(actorHealthData, ACTOR_HEALTH_SYNC_PACKET_TAG)
     actorHealthSyncController.receiveSync(packet)
-    expect(getActorsFn).toBeCalledTimes(actorHealthSyncController.ACTOR_CATEGORIES_TO_BE_SYNCED.length)
+    expect(getActorsFn).toBeCalledTimes(actorHealthSyncController.actorCategories.length)
     expect(sendPacketFn).toBeCalledTimes(1)
   })
 
@@ -190,7 +191,7 @@ describe('ActorHealthSyncController Test', () => {
     } as unknown as INetworkClient
     const packet: ActorHealthSyncPacket = new ActorHealthSyncPacket(actorHealthData, ACTOR_HEALTH_SYNC_PACKET_TAG)
     actorHealthSyncController.receiveSync(packet)
-    expect(getActorsFn).toBeCalledTimes(actorHealthSyncController.ACTOR_CATEGORIES_TO_BE_SYNCED.length)
+    expect(getActorsFn).toBeCalledTimes(actorHealthSyncController.actorCategories.length)
     expect(sendPacketFn).toBeCalledTimes(0)
     expect(actor.health).toBe(actorHealthData.health)
   })
@@ -212,7 +213,7 @@ describe('ActorHealthSyncController Test', () => {
     } as unknown as INetworkClient
     const packet: ActorHealthSyncPacket = new ActorHealthSyncPacket(actorHealthData, ACTOR_HEALTH_SYNC_PACKET_TAG)
     actorHealthSyncController.receiveSync(packet)
-    expect(getActorsFn).toBeCalledTimes(actorHealthSyncController.ACTOR_CATEGORIES_TO_BE_SYNCED.length)
+    expect(getActorsFn).toBeCalledTimes(actorHealthSyncController.actorCategories.length)
     expect(sendPacketFn).toBeCalledTimes(0)
     expect(actor.health).toBe(actorHealthData.health)
     expect(destroyFn).toBeCalledTimes(1)

@@ -7,13 +7,13 @@ import { ActorCategory } from 'modloader64_api/OOT/ActorCategory'
 import { IActor } from 'modloader64_api/OOT/IActor'
 
 class DummyController extends AbstractActorSyncController {
-  ACTOR_CATEGORIES_TO_BE_SYNCED: ActorCategory[]
+  actorCategories: ActorCategory[]
   storage: ActorStorage
 
   constructor (core: IOOTCore, modLoader: IModLoaderAPI, eventHandlers: string[], storage: ActorStorage, categories: ActorCategory[]) {
     super(core, modLoader, eventHandlers)
     this.storage = storage
-    this.ACTOR_CATEGORIES_TO_BE_SYNCED = categories
+    this.actorCategories = categories
   }
 
   sync (frame: number): AbstractPacket[] {
@@ -47,7 +47,7 @@ describe('AbstractActorSyncController Test', () => {
     expect(abstractController.eventHandlers).toBe(eventHandlers)
     expect(abstractController.modLoader).toBe(modLoader)
     expect(abstractController.storage).toBe(actorStorage)
-    expect(abstractController.ACTOR_CATEGORIES_TO_BE_SYNCED).toBe(categories)
+    expect(abstractController.actorCategories).toBe(categories)
   })
 
   test('given correct UUID -> getActors -> returns correct actor', () => {

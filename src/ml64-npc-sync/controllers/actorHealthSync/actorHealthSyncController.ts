@@ -8,15 +8,16 @@ import { ActorHealthStorage } from '../storages/actorHealthStorage'
 import { AbstractActorSyncController } from '../abstractActorSyncController'
 
 export class ActorHealthSyncController extends AbstractActorSyncController {
-  readonly ACTOR_CATEGORIES_TO_BE_SYNCED: ActorCategory[] = [ActorCategory.ENEMY, ActorCategory.BOSS]
+  actorCategories: ActorCategory[]
 
   storage: ActorHealthStorage = {
     scene: -1,
     actorData: {}
   }
 
-  constructor (core: IOOTCore, modLoader: IModLoaderAPI) {
+  constructor (core: IOOTCore, modLoader: IModLoaderAPI, actorCategories: ActorCategory[]) {
     super(core, modLoader, [ACTOR_HEALTH_SYNC_PACKET_TAG])
+    this.actorCategories = actorCategories
   }
 
   sync (_frame: number): AbstractPacket[] {
@@ -24,7 +25,7 @@ export class ActorHealthSyncController extends AbstractActorSyncController {
     if (this.didSceneChange()) {
       this.storage.actorData = {}
     }
-    this.ACTOR_CATEGORIES_TO_BE_SYNCED.forEach((category) => {
+    this.actorCategories.forEach((category) => {
       this.core.actorManager.getActors(category).forEach((actor) => {
         let actorData = this.storage.actorData[actor.actorUUID]
         if (actorData === undefined || actorData == null) {

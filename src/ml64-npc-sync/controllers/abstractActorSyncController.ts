@@ -5,7 +5,7 @@ import { AbstractController } from './abstractController'
 import { ActorStorage } from './storages/actorStorage'
 
 export abstract class AbstractActorSyncController extends AbstractController {
-  abstract readonly ACTOR_CATEGORIES_TO_BE_SYNCED: ActorCategory[]
+  abstract readonly actorCategories: ActorCategory[]
 
   abstract storage: ActorStorage
 
@@ -22,6 +22,6 @@ export abstract class AbstractActorSyncController extends AbstractController {
   }
 
   getActor (uuid: string): IActor | null {
-    return this.ACTOR_CATEGORIES_TO_BE_SYNCED.map((category) => { return (this.core.actorManager.getActors(category).filter((actor) => actor.actorUUID === uuid)) }).filter((array) => array.length > 0).shift()?.shift() ?? null
+    return this.actorCategories.map((category) => { return (this.core.actorManager.getActors(category).filter((actor) => actor.actorUUID === uuid)) }).filter((array) => array.length > 0).shift()?.shift() ?? null
   }
 }
