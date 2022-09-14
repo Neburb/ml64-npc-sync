@@ -5,6 +5,7 @@ import { IOOTCore } from 'modloader64_api/OOT/OOTAPI'
 import { AbstractSyncDispatcher } from './abstractSyncDispatcher'
 
 export const NUMBER_OF_POSITION_DECIMALS = 17
+export const PRIORITY_TO_SUBSTRACT = 0.025
 
 export class HealthSyncDispatcher extends AbstractSyncDispatcher {
   assignPriority (actorStorage: ActorPositionData, prioritySync: PrioritySync, actor: IActor, core: IOOTCore): void {
@@ -12,6 +13,11 @@ export class HealthSyncDispatcher extends AbstractSyncDispatcher {
     if (actor.health < actorStorage.health) {
       actorStorage.health = actor.health
       prioritySync.priority = prioritySync.priority + 1
+    }
+    if (prioritySync.priority > 0) {
+      prioritySync.priority -= PRIORITY_TO_SUBSTRACT
+    } else {
+      prioritySync.priority = 0
     }
   }
 

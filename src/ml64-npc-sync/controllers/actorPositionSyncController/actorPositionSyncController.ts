@@ -37,9 +37,9 @@ export class ActorPositionSyncController extends AbstractActorSyncController {
       this.core.actorManager.getActors(category).forEach((actor) => {
         let actorData = this.storage.actorData[actor.actorUUID]
         if (actorData === undefined || actorData == null) {
-          actorData = { scene: this.storage.scene, health: actor.health, actorID: actor.actorID, actorUUID: actor.actorUUID, position: this.getBase64(actor.position.getRawPos()), rotation: this.getBase64(actor.rotation.getRawRot()) }
+          actorData = { scene: this.storage.scene, health: actor.health, actorID: actor.actorID, actorUUID: actor.actorUUID, category, position: this.getBase64(actor.position.getRawPos()), rotation: this.getBase64(actor.rotation.getRawRot()) }
           this.storage.actorData[actor.actorUUID] = actorData
-          this.storage.prioritySync[actor.actorUUID] = { uuid: this.modLoader.me.uuid, priority: 0, distance: 0 }
+          this.storage.prioritySync[actor.actorUUID] = { uuid: this.modLoader.me.uuid, priority: 0, distance: Number.MAX_SAFE_INTEGER }
         }
         const prioritySync = this.storage.prioritySync[actor.actorUUID]
         if (actorData.health > 0) {
@@ -47,7 +47,7 @@ export class ActorPositionSyncController extends AbstractActorSyncController {
             dispatcher.assignPriority(actorData, prioritySync, actor, this.core)
           })
           this.syncDispatchers.forEach((dispatcher) => {
-            if (actorData.prioritySync != null) {
+            if (actorData.prioritySync != null && prioritySync !== actorData.prioritySync) {
               const priority = dispatcher.hasPriorityOver(prioritySync, actorData.prioritySync)
               if (priority < 0) {
                 return true
@@ -59,6 +59,7 @@ export class ActorPositionSyncController extends AbstractActorSyncController {
             }
           })
           if (actorData.prioritySync?.uuid === this.modLoader.me.uuid) {
+            actorData.prioritySync = prioritySync
             actorData.position = this.getBase64(actor.position.getRawPos())
             actorData.rotation = this.getBase64(actor.rotation.getRawRot())
             packets.push(new ActorPositionSyncPacket(actorData, this.modLoader.clientLobby))
@@ -91,7 +92,7 @@ export class ActorPositionSyncController extends AbstractActorSyncController {
   receiveHealthSync (packet: ActorSyncPacket): void {
     const healthData = packet.actorData as ActorHealthData
     const storagePositionData = this.storage.actorData[healthData.actorUUID]
-    if (healthData.health < storagePositionData.health) {
+    if (storagePositionData != null && healthData.health < storagePositionData.health) {
       storagePositionData.health = healthData.health
     }
   }
@@ -99,20 +100,24 @@ export class ActorPositionSyncController extends AbstractActorSyncController {
   receivePositionSync (packet: ActorSyncPacket): void {
     const positionData = packet.actorData as ActorPositionData
     const storagePositionData = this.storage.actorData[positionData.actorUUID]
-    if (positionData.prioritySync != null && storagePositionData.prioritySync != null) {
+    if (storagePositionData != null && positionData.prioritySync != null && storagePositionData.prioritySync != null) {
       let hasPriority = false
-      this.syncDispatchers.forEach((dispatcher) => {
-        if (positionData.prioritySync != null && storagePositionData.prioritySync != null) {
-          const priority = dispatcher.hasPriorityOver(positionData.prioritySync, storagePositionData.prioritySync)
-          if (priority < 0) {
-            return true
+      if (positionData.prioritySync.uuid === storagePositionData.prioritySync.uuid) {
+        hasPriority = true
+      } else {
+        this.syncDispatchers.forEach((dispatcher) => {
+          if (positionData.prioritySync != null && storagePositionData.prioritySync != null) {
+            const priority = dispatcher.hasPriorityOver(positionData.prioritySync, storagePositionData.prioritySync)
+            if (priority < 0) {
+              return true
+            }
+            if (priority > 0) {
+              hasPriority = true
+              return true
+            }
           }
-          if (priority > 0) {
-            hasPriority = true
-            return true
-          }
-        }
-      })
+        })
+      }
       if (!hasPriority) {
         return
       }

@@ -127,7 +127,7 @@ describe('ActorHealthSyncController Test', () => {
   })
 
   test('given packet with same scene -> receiveSync -> process packet', () => {
-    const actorHealthData = { scene: Math.random() } as unknown as ActorHealthData
+    const actorHealthData = { scene: Math.random(), category: actorHealthSyncController.actorCategories[0] } as unknown as ActorHealthData
     actorHealthSyncController.storage.scene = actorHealthData.scene
     modLoader.clientSide = {
       sendPacket: jest.fn()
@@ -138,7 +138,7 @@ describe('ActorHealthSyncController Test', () => {
   })
 
   test('given packet with no actor in storage -> receiveSync -> sends a packet with 0 health', () => {
-    const actorHealthData = { scene: Math.random(), actorUUID: `UUID-${Math.random().toString(10)}` } as unknown as ActorHealthData
+    const actorHealthData = { scene: Math.random(), actorUUID: `UUID-${Math.random().toString(10)}`, category: actorHealthSyncController.actorCategories[0] } as unknown as ActorHealthData
     actorHealthSyncController.storage.scene = actorHealthData.scene
     const sendPacketFn = jest.fn().mockImplementation((packet) => {
       expect(packet).toBeInstanceOf(ActorHealthSyncPacket)
@@ -155,7 +155,7 @@ describe('ActorHealthSyncController Test', () => {
   })
 
   test('given packet with lesser health actor in storage -> receiveSync -> sends a packet with updated health', () => {
-    const actorHealthData = { scene: Math.random(), actorUUID: `UUID-${Math.random().toString(10)}`, health: Math.random() * 100 } as unknown as ActorHealthData
+    const actorHealthData = { scene: Math.random(), actorUUID: `UUID-${Math.random().toString(10)}`, health: Math.random() * 100, category: actorHealthSyncController.actorCategories[0] } as unknown as ActorHealthData
     actorHealthSyncController.storage.scene = actorHealthData.scene
     const actor = {
       actorUUID: actorHealthData.actorUUID,
@@ -178,7 +178,7 @@ describe('ActorHealthSyncController Test', () => {
   })
 
   test('given packet with greater health actor in storage but not dead -> receiveSync -> updates health', () => {
-    const actorHealthData = { scene: Math.random(), actorUUID: `UUID-${Math.random().toString(10)}`, health: Math.random() * 100 } as unknown as ActorHealthData
+    const actorHealthData = { scene: Math.random(), actorUUID: `UUID-${Math.random().toString(10)}`, health: Math.random() * 100, category: actorHealthSyncController.actorCategories[0] } as unknown as ActorHealthData
     actorHealthSyncController.storage.scene = actorHealthData.scene
     const actor = {
       actorUUID: actorHealthData.actorUUID,
@@ -198,7 +198,7 @@ describe('ActorHealthSyncController Test', () => {
   })
 
   test('given packet with dead actor and greater health actor in storage and sync set to health and death -> receiveSync -> destroys the actor', () => {
-    const actorHealthData = { scene: Math.random(), actorUUID: `UUID-${Math.random().toString(10)}`, health: 0 } as unknown as ActorHealthData
+    const actorHealthData = { scene: Math.random(), actorUUID: `UUID-${Math.random().toString(10)}`, health: 0, category: actorHealthSyncController.actorCategories[0] } as unknown as ActorHealthData
     actorHealthSyncController.storage.scene = actorHealthData.scene
     const destroyFn = jest.fn()
     const actor = {
@@ -222,7 +222,7 @@ describe('ActorHealthSyncController Test', () => {
 
   test('given packet with dead actor and greater health actor in storage and sync set to health -> receiveSync -> does not destroys the actor', () => {
     actorHealthSyncController.healthSyncMode = HealthSyncMode.Health
-    const actorHealthData = { scene: Math.random(), actorUUID: `UUID-${Math.random().toString(10)}`, health: 0 } as unknown as ActorHealthData
+    const actorHealthData = { scene: Math.random(), actorUUID: `UUID-${Math.random().toString(10)}`, health: 0, category: actorHealthSyncController.actorCategories[0] } as unknown as ActorHealthData
     actorHealthSyncController.storage.scene = actorHealthData.scene
     const destroyFn = jest.fn()
     const actor = {
@@ -241,6 +241,29 @@ describe('ActorHealthSyncController Test', () => {
     expect(getActorsFn).toBeCalledTimes(actorHealthSyncController.actorCategories.length)
     expect(sendPacketFn).toBeCalledTimes(0)
     expect(actor.health).toBe(actorHealthData.health)
+    expect(destroyFn).toBeCalledTimes(0)
+  })
+
+  test('given packet category not in list of categories -> receiveSync -> ignores packet', () => {
+    actorHealthSyncController.healthSyncMode = HealthSyncMode.Health
+    const actorHealthData = { scene: Math.random(), actorUUID: `UUID-${Math.random().toString(10)}`, health: 0, category: ActorCategory.BACKGROUNDS } as unknown as ActorHealthData
+    actorHealthSyncController.storage.scene = actorHealthData.scene
+    const destroyFn = jest.fn()
+    const actor = {
+      actorUUID: actorHealthData.actorUUID,
+      actorID: Math.random(),
+      health: Math.random() * 100,
+      destroy: destroyFn
+    } as unknown as IActor
+    actors = [actor]
+    const sendPacketFn = jest.fn()
+    modLoader.clientSide = {
+      sendPacket: sendPacketFn
+    } as unknown as INetworkClient
+    const packet: ActorHealthSyncPacket = new ActorHealthSyncPacket(actorHealthData, ACTOR_HEALTH_SYNC_PACKET_TAG)
+    actorHealthSyncController.receiveSync(packet)
+    expect(getActorsFn).toBeCalledTimes(0)
+    expect(sendPacketFn).toBeCalledTimes(0)
     expect(destroyFn).toBeCalledTimes(0)
   })
 })
