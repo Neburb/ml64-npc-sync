@@ -1,6 +1,7 @@
 # ML64 NPC Sync
 
 Mod for ML64 to sync different attributes between NPCs
+Only works with ML64 `stable` branch
 
 ## Supported games
 
@@ -39,6 +40,10 @@ In these situations it is better that one player move only one block, or that on
 #### Bosses
 
 Bosses are tricky. Health is synced, but not death, as it could break the game. Position is also synced, but randomly, not based on position and aggro, as the game is unplayable if the boss is always hitting the same player
+
+#### Animations
+
+Animation is not synced between any actor
 
 ## Dev
 
