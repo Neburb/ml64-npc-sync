@@ -4,7 +4,6 @@ import { IActor } from 'modloader64_api/OOT/IActor'
 import { IOOTCore } from 'modloader64_api/OOT/OOTAPI'
 import { AbstractSyncDispatcher } from './abstractSyncDispatcher'
 
-export const NUMBER_OF_POSITION_DECIMALS = 17
 export const PRIORITY_TO_SUBSTRACT = 0.025
 
 export class HealthSyncDispatcher extends AbstractSyncDispatcher {
