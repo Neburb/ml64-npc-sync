@@ -16,16 +16,29 @@ Bosses and mini-bosses should work too (Tested with mini-bossed, not yet with bo
 
 ### Position and rotation
 
-I had to sync this based on a virtual `aggro` attribute. Whoever has the greatest aggro is the one that has the enemy synced
+Position and rotation get synced by the player that is nearest the NPC.
+I also added a sync attributed based on a virtual `aggro`. Whoever has the greatest aggro is the one that has the enemy synced
 
-- Every player that enters in an area receives an aggro from each enemy from 0 -> 1 (With decimals). That means that intact enemies will be randomly synced by players
 - If you hit an enemy, you'll increase that enemy's aggro by 1 point. That means that you'll sync that enemy, until another players hit it the same or more times than you
+- Aggro gets lowered every frame until 0. That means that if you don't hit an enemy in a while, you won't sync that enemy
 
-Regular NPCs are also synced, but due to not being able to hit them, they are just randomly synced by all players.
+Regular NPCs are also synced.
 
 Syncing can get a bit yanking. Syncing definitely works with the position and rotation, but if you're not the one syncing the enemy, you'll notice it. It is playable netherless.
 
 I didn't tried it with the whole game, just with some gameplays, and we didn't had any issue. There were a couple of situations were enemies weren't synced when they were dead, but it is not common.
+
+#### Non-NPC Actor syncing
+
+There are also other things getting synced, like, boxes, mirrors, and other puzzle things. These can get a bit weird depending on the puzzle, like:
+
+- Moving boxes sync works, but if someone moves that box, and you try to move it again, it will return to the original place you last moved it
+- Some ice puzzles can be broken if players interacts between these.
+In these situations it is better that one player move only one block, or that one player moves it and others just watch
+
+#### Bosses
+
+Bosses are tricky. Health is synced, but not death, as it could break the game. Position is also synced, but randomly, not based on position and aggro, as the game is unplayable if the boss is always hitting the same player
 
 ## Dev
 

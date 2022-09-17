@@ -2,7 +2,7 @@ import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI'
 import { IOOTCore, IOotHelper } from 'modloader64_api/OOT/OOTAPI'
 import { ActorHealthSyncController } from '../../src/ml64-npc-sync/controllers/actorHealthSync/actorHealthSyncController'
 import { ActorSyncClient } from '../../src/ml64-npc-sync/clients/ActorSyncClient'
-import { ActorPositionSyncController } from '../../src/ml64-npc-sync/controllers/actorPositionSyncController.ts/actorPositionSyncController'
+import { ActorPositionSyncController } from '../../src/ml64-npc-sync/controllers/actorPositionSyncController/actorPositionSyncController'
 import { INetworkController } from '../../src/ml64-npc-sync/controllers/interfaces/networkController'
 import { ActorHealthSyncPacket, ACTOR_HEALTH_SYNC_PACKET_TAG } from '../../src/ml64-npc-sync/packets/actorHealthSyncPacket'
 import { ActorHealthData } from '../../src/ml64-npc-sync/model/actorHealthData'
@@ -28,13 +28,19 @@ describe('ActorSyncClient Test', () => {
 
   test('preinit -> correctly setup controllers', () => {
     actorSyncClient.preinit()
-    expect(actorSyncClient.controllers.length).toBe(2)
+    expect(actorSyncClient.controllers.length).toBe(4)
     expect(actorSyncClient.controllers[0]).toBeInstanceOf(ActorHealthSyncController)
     expect(actorSyncClient.controllers[0].core).toBe(core)
     expect(actorSyncClient.controllers[0].modLoader).toBe(modLoader)
-    expect(actorSyncClient.controllers[1]).toBeInstanceOf(ActorPositionSyncController)
+    expect(actorSyncClient.controllers[1]).toBeInstanceOf(ActorHealthSyncController)
     expect(actorSyncClient.controllers[1].core).toBe(core)
     expect(actorSyncClient.controllers[1].modLoader).toBe(modLoader)
+    expect(actorSyncClient.controllers[2]).toBeInstanceOf(ActorPositionSyncController)
+    expect(actorSyncClient.controllers[2].core).toBe(core)
+    expect(actorSyncClient.controllers[2].modLoader).toBe(modLoader)
+    expect(actorSyncClient.controllers[3]).toBeInstanceOf(ActorPositionSyncController)
+    expect(actorSyncClient.controllers[3].core).toBe(core)
+    expect(actorSyncClient.controllers[3].modLoader).toBe(modLoader)
   })
 
   test('given title screen -> onTick -> does nothing', () => {

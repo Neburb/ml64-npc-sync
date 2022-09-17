@@ -1,3 +1,4 @@
+import { ActorCategory } from 'modloader64_api/OOT/ActorCategory'
 import { ActorHealthData } from '../../src/ml64-npc-sync/model/actorHealthData'
 import { ActorHealthSyncPacket, ACTOR_HEALTH_SYNC_PACKET_TAG } from '../../src/ml64-npc-sync/packets/actorHealthSyncPacket'
 
@@ -6,7 +7,7 @@ describe('ActorHealthSyncPacket Test', () => {
   let actorData: ActorHealthData
   let lobby: string
   beforeEach(() => {
-    actorData = { health: 100, scene: Math.random(), actorID: Math.random(), actorUUID: Math.random().toString(10) }
+    actorData = { health: 100, scene: Math.random(), actorID: Math.random(), actorUUID: Math.random().toString(10), category: ActorCategory.ENEMY }
     packet = new ActorHealthSyncPacket(actorData, lobby)
   })
   test('given correct ActorHealthSyncPacket -> creation -> is successfully setup', () => {

@@ -1,4 +1,5 @@
 export interface PrioritySync {
   uuid: string
-  aggro: number
+  priority: number
+  distance: number
 }

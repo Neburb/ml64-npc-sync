@@ -6,17 +6,19 @@ import { ActorCategory } from 'modloader64_api/OOT/ActorCategory'
 import { IOOTCore } from 'modloader64_api/OOT/OOTAPI'
 import { ActorHealthStorage } from '../storages/actorHealthStorage'
 import { AbstractActorSyncController } from '../abstractActorSyncController'
+import { HealthSyncMode } from './healthSyncMode'
 
 export class ActorHealthSyncController extends AbstractActorSyncController {
-  readonly ACTOR_CATEGORIES_TO_BE_SYNCED: ActorCategory[] = [ActorCategory.ENEMY, ActorCategory.BOSS]
+  healthSyncMode: HealthSyncMode
 
   storage: ActorHealthStorage = {
     scene: -1,
     actorData: {}
   }
 
-  constructor (core: IOOTCore, modLoader: IModLoaderAPI) {
-    super(core, modLoader, [ACTOR_HEALTH_SYNC_PACKET_TAG])
+  constructor (core: IOOTCore, modLoader: IModLoaderAPI, actorCategories: ActorCategory[], healthSyncMode: HealthSyncMode) {
+    super(core, modLoader, [ACTOR_HEALTH_SYNC_PACKET_TAG], actorCategories)
+    this.healthSyncMode = healthSyncMode
   }
 
   sync (_frame: number): AbstractPacket[] {
@@ -24,11 +26,11 @@ export class ActorHealthSyncController extends AbstractActorSyncController {
     if (this.didSceneChange()) {
       this.storage.actorData = {}
     }
-    this.ACTOR_CATEGORIES_TO_BE_SYNCED.forEach((category) => {
+    this.actorCategories.forEach((category) => {
       this.core.actorManager.getActors(category).forEach((actor) => {
         let actorData = this.storage.actorData[actor.actorUUID]
         if (actorData === undefined || actorData == null) {
-          actorData = { scene: this.storage.scene, actorID: actor.actorID, actorUUID: actor.actorUUID, health: actor.health }
+          actorData = { scene: this.storage.scene, actorID: actor.actorID, actorUUID: actor.actorUUID, health: actor.health, category }
           this.storage.actorData[actor.actorUUID] = actorData
         }
         if (actorData.health > 0) {
@@ -50,6 +52,10 @@ export class ActorHealthSyncController extends AbstractActorSyncController {
 
     const actorData = healthPacket.actorData as ActorHealthData
 
+    if (!this.actorCategories.includes(actorData.category)) {
+      return
+    }
+
     const actor = this.getActor(healthPacket.actorData.actorUUID)
     if (actor !== undefined && actor != null) {
       if (actor.health < actorData.health) {
@@ -58,13 +64,16 @@ export class ActorHealthSyncController extends AbstractActorSyncController {
       } else {
         this.storage.actorData[healthPacket.actorData.actorUUID] = actorData
         actor.health = actorData.health
-        if (actorData.health <= 0) {
+        if (actorData.health <= 0 && this.healthSyncMode === HealthSyncMode.HealthAndDeath) {
           actor.destroy()
         }
       }
     } else {
-      actorData.health = 0
-      this.modLoader.clientSide.sendPacket(new ActorHealthSyncPacket(actorData, this.modLoader.clientLobby))
+      const actorStorageData = this.storage.actorData[healthPacket.actorData.actorUUID]
+      if (actorStorageData !== undefined && actorData.category === actorStorageData.category) {
+        actorData.health = 0
+        this.modLoader.clientSide.sendPacket(new ActorHealthSyncPacket(actorData, this.modLoader.clientLobby))
+      }
     }
   }
 }
